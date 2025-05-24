@@ -8,43 +8,44 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg jq
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg jq
 
-      - name: Generate narration (TTS)
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: |
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST "https://api-inference.huggingface.co/models/tts_models/en/ljspeech/tacotron2-DDC" \
-            -H "Authorization: Bearer $HF_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\\n/\\\\n/g' script.txt)\"}")
-          CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | head -n-1)
-          if [ "$CODE" = "200" ]; then
-            echo "$BODY" | base64 -d > narration.wav
-          else
-            echo "TTS failed with HTTP $CODE" >&2
-            exit 1
-          fi
+    - name: Generate narration (TTS)
+      env:
+        HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+      run: |
+        RESPONSE=$(curl -s -w "\n%{http_code}" \
+          -X POST "https://api-inference.huggingface.co/models/tts_models/en/ljspeech/tacotron2-DDC" \
+          -H "Authorization: Bearer $HF_API_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\\n/\\\\n/g' script.txt)\"}")
+        CODE=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | head -n-1)
+        if [ "$CODE" = "200" ]; then
+          echo "$BODY" | base64 -d > narration.wav
+        else
+          echo "TTS failed with HTTP $CODE" >&2
+          exit 1
+        fi
 
-      - name: Generate image
-        run: |
-          curl -s "https://source.unsplash.com/1280x720/?bible" -o image.png
+    - name: Generate image
+      run: |
+        curl -s "https://source.unsplash.com/1280x720/?bible" -o image.png
 
-      - name: Assemble video
-        run: |
-          ffmpeg -y -loop 1 -t 30 -i image.png -i narration.wav \
-            -c:v libx264 -c:a aac video.mp4
+    - name: Assemble video
+      run: |
+        ffmpeg -y -loop 1 -t 30 -i image.png -i narration.wav \
+          -c:v libx264 -c:a aac video.mp4
 
-      - name: Upload video as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: bible-video
-          path: video.mp4
+    - name: Upload video as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: bible-video
+        path: video.mp4
