@@ -4,8 +4,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-lint:
+  build-and-publish:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Say Hello
-        run: echo "YAML is now valid!"
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install & debug dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg jq git python3-pip
+          echo "=== ffmpeg version ==="
+          ffmpeg -version
+          echo "=== jq version ==="
+          jq --version
+          echo "=== Python version ==="
+          python3 --version
+          echo "=== pip version ==="
+          pip3 --version
