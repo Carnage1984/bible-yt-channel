@@ -31,7 +31,7 @@ jobs:
 
       - name: Generate image
         run: |
-          curl -sL -o image.jpg "https://source.unsplash.com/random/1280x720/?bible"
+          curl -sL -o image.jpg "https://picsum.photos/1280/720.jpg?blur"
 
       - name: Assemble video
         run: |
