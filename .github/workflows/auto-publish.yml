@@ -45,7 +45,7 @@ jobs:
           -c:v libx264 -c:a aac video.mp4
 
     - name: Upload video as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: bible-video
         path: video.mp4
