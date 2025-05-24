@@ -12,13 +12,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Authenticate to Google
-      uses: google-github-actions/auth@v1
-      with:
-        client_id: ${{ secrets.YT_CLIENT_ID }}
-        client_secret: ${{ secrets.YT_CLIENT_SECRET }}
-        refresh_token: ${{ secrets.YT_REFRESH_TOKEN }}
-
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -51,9 +44,8 @@ jobs:
         ffmpeg -y -loop 1 -t 30 -i image.png -i narration.wav \
           -c:v libx264 -c:a aac video.mp4
 
-    - name: Upload to YouTube
-      uses: google-github-actions/upload-video@v1
+    - name: Upload video as artifact
+      uses: actions/upload-artifact@v3
       with:
-        video_file: video.mp4
-        title: "Daily Bible Reading"
-        description: "Automated upload of today's Bible passage."
+        name: bible-video
+        path: video.mp4
