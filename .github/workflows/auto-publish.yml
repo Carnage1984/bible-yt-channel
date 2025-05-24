@@ -18,6 +18,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg jq git python3-pip
+          pip3 install gtts
           echo "=== ffmpeg version ==="
           ffmpeg -version
           echo "=== jq version ==="
@@ -26,3 +27,13 @@ jobs:
           python3 --version
           echo "=== pip version ==="
           pip3 --version
+
+      - name: Generate narration (gTTS)
+        run: |
+          python3 - << 'PYCODE'
+from gtts import gTTS
+text = open('script.txt', 'r', encoding='utf-8').read()
+tts = gTTS(text, lang='en')
+tts.save('narration.mp3')
+PYCODE
+          ffmpeg -y -i narration.mp3 narration.wav
