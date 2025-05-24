@@ -33,11 +33,16 @@ jobs:
           -d "{\"inputs\": \"$(head -n1 script.txt)\"}" \
           --output image.png
 
+    - name: Install FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
     - name: Assemble video
       run: |
         ffmpeg -y -loop 1 -t 30 -i image.png -i narration.wav \
           -c:v libx264 -c:a aac video.mp4
 
     - name: Upload to YouTube
-      # (we’ll skip this for now—manual upload later)
+      # manual upload later
       run: echo "Video ready at $GITHUB_WORKSPACE/video.mp4"
