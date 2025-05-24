@@ -26,7 +26,7 @@ jobs:
         HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
       run: |
         RESPONSE=$(curl -s -w "\n%{http_code}" \
-          -X POST "https://api-inference.huggingface.co/models/coqui/tts_models/en/ljspeech/tacotron2-DDC" \
+          -X POST "https://api-inference.huggingface.co/models/tts_models/en/ljspeech/vits" \
           -H "Authorization: Bearer $HF_API_TOKEN" \
           -H "Content-Type: application/json" \
           -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\\n/\\\\n/g' script.txt)\"}")
