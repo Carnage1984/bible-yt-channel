@@ -37,8 +37,8 @@ jobs:
           DEEPAI: ${{ secrets.DEEPAI }}
         run: |
           RESPONSE=$(curl -s -X POST "https://api.deepai.org/api/text2img" \
-            -H "Api-Key: $DEEPAI"
-            -F "text=Jesus walking through golden wheat field, heavenly light, realistic photo")
+            -H "Api-Key: $DEEPAI" \
+            --data-urlencode "text=Jesus walking through golden wheat field, heavenly light, realistic photo")
 
           IMAGE_URL=$(echo "$RESPONSE" | jq -r '.output_url')
 
