@@ -2,7 +2,7 @@ name: Auto Publish Bible Video
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    - cron: '0 9 * * *'      # daily at 09:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -10,12 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        persist-credentials: true
 
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg jq
+        sudo apt-get install -y ffmpeg jq git
 
     - name: Generate narration (TTS)
       env:
@@ -44,8 +48,12 @@ jobs:
         ffmpeg -y -loop 1 -t 30 -i image.png -i narration.wav \
           -c:v libx264 -c:a aac video.mp4
 
-    - name: Upload video as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: bible-video
-        path: video.mp4
+    - name: Commit and push video.mp4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add video.mp4
+        git commit -m "Add daily Bible video"
+        git push origin main
