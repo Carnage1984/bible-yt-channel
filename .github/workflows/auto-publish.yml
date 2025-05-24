@@ -40,7 +40,10 @@ jobs:
             -H "Api-Key: $DEEPAI" \
             --data-urlencode "text=Jesus walking through golden wheat field, heavenly light, realistic photo")
 
+          echo "DeepAI raw response: $RESPONSE"
+
           IMAGE_URL=$(echo "$RESPONSE" | jq -r '.output_url')
+          echo "Resolved IMAGE_URL: $IMAGE_URL"
 
           if [ "$IMAGE_URL" = "null" ] || [ -z "$IMAGE_URL" ]; then
             echo "No image URL from DeepAI. Falling back to Unsplash..."
@@ -51,6 +54,7 @@ jobs:
 
       - name: Assemble video
         run: |
+          file image.jpg
           ffmpeg -y -loop 1 -t 30 -i image.jpg -i narration.wav \
             -c:v libx264 -c:a aac -shortest video.mp4
 
