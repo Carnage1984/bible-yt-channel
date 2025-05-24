@@ -13,30 +13,32 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg jq
+
     - name: Generate narration (TTS)
       env:
         HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
       run: |
-        curl -s -X POST "https://api-inference.huggingface.co/models/tts_models/en/ljspeech/tacotron2-DDC" \
+        RESPONSE=$(curl -s -w "\n%{http_code}" \
+          -X POST "https://api-inference.huggingface.co/models/tts_models/en/ljspeech/tacotron2-DDC" \
           -H "Authorization: Bearer $HF_API_TOKEN" \
           -H "Content-Type: application/json" \
-          -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\\n/\\\\n/g' script.txt)\"}" \
-          --output narration.wav
+          -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\\n/\\\\n/g' script.txt)\"}")
+        CODE=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | head -n-1)
+        if [ "$CODE" = "200" ]; then
+          echo "$BODY" | base64 -d > narration.wav
+        else
+          echo "TTS failed with HTTP $CODE" >&2
+          exit 1
+        fi
 
-    - name: Generate image (Stable Diffusion)
-      env:
-        HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+    - name: Generate image (Unsplash fallback)
       run: |
-        curl -s -X POST "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5" \
-          -H "Authorization: Bearer $HF_API_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "{\"inputs\": \"$(head -n1 script.txt)\"}" \
-          --output image.png
-
-    - name: Install FFmpeg
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        curl -s "https://source.unsplash.com/1280x720/?bible" -o image.png
 
     - name: Assemble video
       run: |
@@ -44,5 +46,9 @@ jobs:
           -c:v libx264 -c:a aac video.mp4
 
     - name: Upload to YouTube
-      # manual upload later
-      run: echo "Video ready at $GITHUB_WORKSPACE/video.mp4"
+      uses: google-github-actions/upload-video@v1
+      with:
+        api_key: ${{ secrets.YT_API_KEY }}
+        video_file: video.mp4
+        title: "Daily Bible Reading"
+        description: "Automated upload of today's Bible passage."
