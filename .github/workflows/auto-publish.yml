@@ -3,15 +3,21 @@ name: Auto Publish Bible Video
 on:
   schedule:
     - cron: '0 9 * * *'    # daily at 09:00 UTC
-  workflow_dispatch:      # manual trigger
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
+
+    - name: Authenticate to Google
+      uses: google-github-actions/auth@v1
+      with:
+        client_id: ${{ secrets.YT_CLIENT_ID }}
+        client_secret: ${{ secrets.YT_CLIENT_SECRET }}
+        refresh_token: ${{ secrets.YT_REFRESH_TOKEN }}
 
     - name: Install dependencies
       run: |
@@ -36,7 +42,7 @@ jobs:
           exit 1
         fi
 
-    - name: Generate image (Unsplash fallback)
+    - name: Generate image
       run: |
         curl -s "https://source.unsplash.com/1280x720/?bible" -o image.png
 
@@ -45,8 +51,9 @@ jobs:
         ffmpeg -y -loop 1 -t 30 -i image.png -i narration.wav \
           -c:v libx264 -c:a aac video.mp4
 
-    - name: Upload video as artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload to YouTube
+      uses: google-github-actions/upload-video@v1
       with:
-        name: bible-video
-        path: video.mp4
+        video_file: video.mp4
+        title: "Daily Bible Reading"
+        description: "Automated upload of today's Bible passage."
