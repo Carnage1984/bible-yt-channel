@@ -19,25 +19,19 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg jq git
+        sudo apt-get install -y ffmpeg git python3-pip
 
-    - name: Generate narration (TTS)
-      env:
-        HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+    - name: Generate narration (gTTS)
       run: |
-        RESPONSE=$(curl -s -w "\n%{http_code}" \
-          -X POST "https://api-inference.huggingface.co/models/tts_models/en/ljspeech/vits" \
-          -H "Authorization: Bearer $HF_API_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\\n/\\\\n/g' script.txt)\"}")
-        CODE=$(echo "$RESPONSE" | tail -n1)
-        BODY=$(echo "$RESPONSE" | head -n-1)
-        if [ "$CODE" = "200" ]; then
-          echo "$BODY" | base64 -d > narration.wav
-        else
-          echo "TTS failed with HTTP $CODE" >&2
-          exit 1
-        fi
+        pip3 install gtts
+        python3 - << 'PYCODE'
+import sys
+from gtts import gTTS
+text = open('script.txt', 'r', encoding='utf-8').read()
+tts = gTTS(text, lang='en')
+tts.save('narration.mp3')
+PYCODE
+        ffmpeg -y -i narration.mp3 narration.wav
 
     - name: Generate image
       run: |
@@ -55,5 +49,5 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add video.mp4
-        git commit -m "Add daily Bible video"
+        git commit -m "Use gTTS for narration and add daily video"
         git push origin main
