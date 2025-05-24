@@ -34,7 +34,7 @@ jobs:
 
       - name: Generate image
         run: |
-          curl -sL -o image.jpg "https://picsum.photos/1280/720.jpg?blur"
+          curl -sL -o image.jpg "https://source.unsplash.com/featured/1280x720/?bible,Jesus,scripture,cross,heaven,prayer,grace,disciples,resurrection,God,hope,faith,salvation,worship,holy,church,peace,miracle,light,redemption,Messiah,love,praise,Christ,blessing,Christianity,harmony,comfort,devotion,truth,eternity"
 
       - name: Assemble video
         run: |
