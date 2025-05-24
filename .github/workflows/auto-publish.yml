@@ -3,7 +3,7 @@ name: Auto Publish Bible Video
 on:
   schedule:
     - cron: '0 9 * * *'    # daily at 09:00 UTC
-  workflow_dispatch:
+  workflow_dispatch:      # manual trigger
 
 jobs:
   build-and-publish:
@@ -20,7 +20,7 @@ jobs:
         curl -s -X POST "https://api-inference.huggingface.co/models/tts_models/en/ljspeech/tacotron2-DDC" \
           -H "Authorization: Bearer $HF_API_TOKEN" \
           -H "Content-Type: application/json" \
-          -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\n/\\n/g' script.txt)\"}" \
+          -d "{\"inputs\": \"$(sed ':a;N;$!ba;s/\"/\\\"/g;s/\\n/\\\\n/g' script.txt)\"}" \
           --output narration.wav
 
     - name: Generate image (Stable Diffusion)
@@ -39,9 +39,5 @@ jobs:
           -c:v libx264 -c:a aac video.mp4
 
     - name: Upload to YouTube
-      uses: google-github-actions/upload-video@v1
-      with:
-        api_key: ${{ secrets.YT_API_KEY }}
-        video_file: video.mp4
-        title: "Daily Bible Reading"
-        description: "Automated upload of today's Bible passage."
+      # (we’ll skip this for now—manual upload later)
+      run: echo "Video ready at $GITHUB_WORKSPACE/video.mp4"
