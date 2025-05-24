@@ -32,20 +32,22 @@ jobs:
           python3 narrate.py
           ffmpeg -y -i narration.mp3 narration.wav
 
-      - name: Generate image (Hugging Face)
+      - name: Generate image (Hugging Face with fallback)
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
-          curl -s -X POST "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5" \
+          RESPONSE=$(curl -s -X POST "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5" \
             -H "Authorization: Bearer $HF_API_TOKEN" \
             -H "Content-Type: application/json" \
-            -d '{"inputs":"realistic image of Jesus walking through a golden field, bright sunlight, biblical mood"}' \
-            --output image.jpg
+            -d '{"inputs":"realistic image of Jesus walking through a golden field, bright sunlight, biblical mood"}')
 
-      - name: Backup image if generation failed (fallback to Unsplash)
-        run: |
-          if [ ! -s image.jpg ]; then
+          IMAGE_URL=$(echo "$RESPONSE" | jq -r '.generated_image_url')
+
+          if [ "$IMAGE_URL" = "null" ] || [ -z "$IMAGE_URL" ]; then
+            echo "No image URL from Hugging Face. Falling back to Unsplash..."
             curl -sL -o image.jpg "https://source.unsplash.com/featured/1280x720/?bible,Jesus,scripture,cross,heaven,prayer,grace,disciples,resurrection,God,hope,faith,salvation,worship,holy,church,peace,miracle,light,redemption,Messiah,love,praise,Christ,blessing,Christianity,harmony,comfort,devotion,truth,eternity"
+          else
+            curl -sL -o image.jpg "$IMAGE_URL"
           fi
 
       - name: Assemble video
