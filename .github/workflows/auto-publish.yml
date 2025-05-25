@@ -34,8 +34,12 @@ jobs:
 
       - name: Download 3D-styled image from Unsplash
         run: |
-          URL=$(curl -sI "https://source.unsplash.com/featured/1280x720/?bible,Jesus,3d,render,scripture,cross,heaven" | grep -i location | awk '{print $2}' | tr -d '\r')
-          curl -sL "$URL" --output image.jpg
+          URL=$(curl -sI "https://source.unsplash.com/featured/1280x720/?bible,Jesus,3d,render,scripture,cross,heaven" | awk '/^location:/ {print $2}' | tr -d '\r')
+          if [ -z "$URL" ]; then
+            echo "Failed to fetch redirect URL from Unsplash"
+            exit 1
+          fi
+          curl -sL "$URL" --output image.jpg || { echo "Download failed"; exit 1; }
 
       - name: Assemble video
         run: |
@@ -49,5 +53,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add video.mp4
-          git commit -m "Use GitHub UI only for push actions"
+          git commit -m "downloads the actual image file directly"
           git push origin main
