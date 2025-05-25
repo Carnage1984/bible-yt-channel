@@ -32,29 +32,12 @@ jobs:
           python3 narrate.py
           ffmpeg -y -i narration.mp3 narration.wav
 
-      - name: Generate image (DeepAI fallback)
-        env:
-          DEEPAI: ${{ secrets.DEEPAI }}
+      - name: Download 3D-styled image from Unsplash
         run: |
-          RESPONSE=$(curl -s -X POST "https://api.deepai.org/api/text2img" \
-            -H "Api-Key: $DEEPAI" \
-            --data-urlencode "text=Jesus walking through golden wheat field, heavenly light, realistic photo")
-
-          echo "DeepAI raw response: $RESPONSE"
-
-          IMAGE_URL=$(echo "$RESPONSE" | jq -r '.output_url')
-          echo "Resolved IMAGE_URL: $IMAGE_URL"
-
-          if [ "$IMAGE_URL" = "null" ] || [ -z "$IMAGE_URL" ]; then
-            echo "No image URL from DeepAI. Falling back to Unsplash..."
-            curl -sL -o image.jpg "https://source.unsplash.com/featured/1280x720/?bible,Jesus,scripture,cross,heaven,prayer,grace,disciples,resurrection,God,hope,faith,salvation,worship,holy,church,peace,miracle,light,redemption,Messiah,love,praise,Christ,blessing,Christianity,harmony,comfort,devotion,truth,eternity"
-          else
-            curl -sL -o image.jpg "$IMAGE_URL"
-          fi
+          curl -sL -o image.jpg "https://source.unsplash.com/featured/1280x720/?bible,Jesus,3d,render,scripture,cross,heaven"
 
       - name: Assemble video
         run: |
-          file image.jpg
           ffmpeg -y -loop 1 -t 30 -i image.jpg -i narration.wav \
             -c:v libx264 -c:a aac -shortest video.mp4
 
